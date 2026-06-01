@@ -1,4 +1,4 @@
-# MCP Setup
+ # MCP Setup
 
 This repository contains MCP configuration for local development using Docker Compose.
 
@@ -12,7 +12,7 @@ This repository contains MCP configuration for local development using Docker Co
 - `package.json` – convenient npm wrappers for Docker Compose commands
 - `.env` – environment variables used by the containers
 - `generate.js` and `source.json` – source configuration used to generate MCP config files
-- `generated/` – generated client config files such as `claude.json`, `kiro.json`, `opencode.json`, and `vscode.json`
+- `generated/` – generated client config files such as `claude.json`, `kiro.json`, `opencode.json`, `trae.json`, and `vscode.json`
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ Before starting MCP, generate the client configuration files once:
 npm run generate
 ```
 
-That command creates the generated config files used by clients such as `claude.json`, `kiro.json`, `opencode.json`, and `vscode.json`.
+That command creates the generated config files used by clients such as `claude.json`, `kiro.json`, `opencode.json`, `trae.json`, and `vscode.json`.
 
 Then run MCP from the project root (`~/.mcp`):
 
@@ -42,7 +42,17 @@ npm run stop:mcp
 
 ## Client config symlink tutorial
 
-After running `npm run generate`, you can symlink the generated client config into your VS Code and MCP client locations.
+This repository supports two approaches for VS Code MCP configuration:
+
+### Option 1: Workspace-level config (shared with team)
+The generated `.vscode/mcp.json` is committed to the repository and applies to all team members who open this workspace in VS Code. Use this for consistent, shared MCP server configuration.
+
+After running `npm run generate`, the workspace config is automatically created in `.vscode/mcp.json`. No additional setup needed.
+
+### Option 2: User profile config (personal setup)
+If you prefer personal MCP configuration across all workspaces, you can create symlinks to the generated configs in your VS Code user profile.
+
+After running `npm run generate`, you can symlink the generated client config into your VS Code user profile locations.
 
 Common symlink commands on macOS and Linux:
 
@@ -64,6 +74,37 @@ ln -sf ~/.mcp/generated/opencode.json "$HOME/.config/opencode/opencode.json"
 
 For OpenCode, the generated config uses the `mcp` root key and local `docker exec` commands to run the MCP containerized servers.
 
+#### Trae
+
+Trae configuration uses the standard `mcpServers` root key.
+
+**Global config** (recommended — applies to all projects):
+
+| Platform | Path |
+|---|---|
+| macOS | `~/Library/Application Support/Trae/User/mcp.json` |
+| Linux | `~/.config/Trae/User/mcp.json` |
+| Windows | `%APPDATA%\Trae\User\mcp.json` |
+
+```bash
+# macOS
+mkdir -p "$HOME/Library/Application Support/Trae/User"
+ln -sf ~/.mcp/generated/trae.json "$HOME/Library/Application Support/Trae/User/mcp.json"
+
+# Linux
+mkdir -p ~/.config/Trae/User
+ln -sf ~/.mcp/generated/trae.json ~/.config/Trae/User/mcp.json
+```
+
+**Project-level config** (experimental — agent may not have access):
+
+```bash
+mkdir -p /path/to/your-project/.trae
+ln -sf ~/.mcp/generated/trae.json /path/to/your-project/.trae/mcp.json
+```
+
+Restart Trae after setting up the symlink.
+
 For Windows PowerShell, use `New-Item -ItemType SymbolicLink` and adjust the source path if necessary:
 
 ```powershell
@@ -71,6 +112,12 @@ New-Item -ItemType SymbolicLink -Path "$HOME\AppData\Roaming\Code\User\mcp.json"
 New-Item -ItemType SymbolicLink -Path "$HOME\AppData\Roaming\Code\User\mcp.claude.json" -Target "C:\Users\<user>\.mcp\generated\claude.json"
 New-Item -ItemType SymbolicLink -Path "$HOME\AppData\Roaming\Code\User\mcp.kiro.json" -Target "C:\Users\<user>\.mcp\generated\kiro.json"
 New-Item -ItemType SymbolicLink -Path "$HOME\AppData\Roaming\Code\User\mcp.opencode.json" -Target "C:\Users\<user>\.mcp\generated\opencode.json"
+
+# Trae (global)
+New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.trae\mcp.json" -Target "$env:USERPROFILE\.mcp\generated\trae.json"
+
+# Trae (per-project, run inside each project directory)
+New-Item -ItemType SymbolicLink -Path ".trae\mcp.json" -Target "$env:USERPROFILE\.mcp\generated\trae.json"
 ```
 
 If symlinks are not available on Windows, you can copy the files instead:

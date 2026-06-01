@@ -80,4 +80,15 @@ fs.writeFileSync(
   )
 );
 
+fs.writeFileSync(
+  "./generated/trae.json",
+  JSON.stringify(
+    {
+      mcpServers: source.mcpServers || {}
+    },
+    null,
+    2
+  )
+);
+
 console.log("generated");
