@@ -43,11 +43,17 @@ fs.mkdirSync("./generated", {
   recursive: true
 });
 
+const vscodeServers = Object.fromEntries(
+  Object.entries(resolvedSource.mcpServers || {}).map(([name, server]) => [
+    name,
+    { ...server, type: "stdio" }
+  ])
+);
 fs.writeFileSync(
   "./generated/vscode.json",
   JSON.stringify(
     {
-      servers: resolvedSource.mcpServers || {}
+      servers: vscodeServers
     },
     null,
     2
@@ -58,7 +64,7 @@ fs.writeFileSync(
   "./generated/claude.json",
   JSON.stringify(
     {
-      mcpServers: resolvedSource
+      mcpServers: resolvedSource.mcpServers
     },
     null,
     2
@@ -153,7 +159,7 @@ fs.writeFileSync(
   "./generated/kiro.json",
   JSON.stringify(
     {
-      mcpServers: resolvedSource
+      mcpServers: resolvedSource.mcpServers
     },
     null,
     2
