@@ -4,6 +4,9 @@
 # Docker Compose overrides can be local-only if needed
 # docker-compose.override.yml
 
+# Generated MCP client configs (build artifacts)
+generated/
+
 # Node artifacts
 node_modules/
 npm-debug.log*
