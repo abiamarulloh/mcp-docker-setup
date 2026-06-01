@@ -19,3 +19,17 @@ services:
     tty: true
     stdin_open: true
     restart: 'no'
+
+  jira:
+    environment:
+      - NODE_ENV=development
+    tty: true
+    stdin_open: true
+    restart: 'no'
+
+  slack:
+    environment:
+      - NODE_ENV=development
+    tty: true
+    stdin_open: true
+    restart: 'no'
