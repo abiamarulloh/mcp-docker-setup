@@ -1,0 +1,16 @@
+{
+  "name": "mcp-setup",
+  "version": "1.0.0",
+  "description": "Local MCP Docker Compose setup with generated server configs for VS Code and other clients.",
+  "private": true,
+  "scripts": {
+    "start:mcp": "./mcp-start.sh",
+    "stop:mcp": "./mcp-stop.sh",
+    "status:mcp": "./mcp-status.sh",
+    "logs:mcp": "docker compose logs -f",
+    "generate": "node ./generate.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

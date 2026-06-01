@@ -1,0 +1,17 @@
+# Local environment secrets
+.env
+
+# Docker Compose overrides can be local-only if needed
+# docker-compose.override.yml
+
+# Node artifacts
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# OS artifacts
+.DS_Store
+
+# Editor folders
+.vscode/
+.idea/

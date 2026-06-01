@@ -1,0 +1,40 @@
+services:
+  context7:
+    image: node:20-alpine
+    container_name: mcp_context7
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace:delegated
+      - /tmp:/tmp:delegated
+    env_file:
+      - .env
+    command: sh -lc "npx -y @upstash/context7-mcp"
+    restart: unless-stopped
+
+  filesystem-personal:
+    image: node:20-alpine
+    container_name: mcp_filesystem_personal
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace:delegated
+      - /Volumes/Data/my-labs:/data:delegated
+      - /tmp:/tmp:delegated
+    env_file:
+      - .env
+    command: sh -lc "npx -y @modelcontextprotocol/server-filesystem /data"
+    restart: unless-stopped
+
+  github-personal:
+    image: node:20-alpine
+    container_name: mcp_github_personal
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace:delegated
+      - /tmp:/tmp:delegated
+    env_file:
+      - .env
+    command: sh -lc "npx -y @modelcontextprotocol/server-github"
+    restart: unless-stopped
+    depends_on:
+      - context7
+      - filesystem-personal

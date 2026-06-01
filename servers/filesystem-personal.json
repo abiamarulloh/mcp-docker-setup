@@ -1,0 +1,10 @@
+{
+    "filesystem-personal": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Volumes/Data/my-labs"
+      ]
+    }
+}

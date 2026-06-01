@@ -1,0 +1,21 @@
+services:
+  context7:
+    environment:
+      - NODE_ENV=development
+    tty: true
+    stdin_open: true
+    restart: 'no'
+
+  filesystem-personal:
+    environment:
+      - NODE_ENV=development
+    tty: true
+    stdin_open: true
+    restart: 'no'
+
+  github-personal:
+    environment:
+      - NODE_ENV=development
+    tty: true
+    stdin_open: true
+    restart: 'no'
