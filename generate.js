@@ -32,6 +32,7 @@ fs.writeFileSync(
 );
 
 const opencode = {
+  $schema: "https://opencode.ai/config.json",
   mcp: {}
 };
 
@@ -39,7 +40,15 @@ for (const [name, server] of Object.entries(source.mcpServers || {})) {
   const containerName = `mcp_${name.replace(/-/g, "_")}`;
   opencode.mcp[name] = {
     type: "local",
-    command: `docker exec -i ${containerName} ${server.command} ${server.args.join(" ")}`,
+    enabled: true,
+    command: [
+      "docker",
+      "exec",
+      "-i",
+      containerName,
+      server.command,
+      ...server.args
+    ],
     env: server.env || undefined
   };
 }
