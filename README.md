@@ -59,8 +59,10 @@ For Linux, the target path may differ depending on your VS Code install. Common 
 ln -sf ~/.mcp/generated/vscode.json "$HOME/.config/Code/User/mcp.json"
 ln -sf ~/.mcp/generated/claude.json "$HOME/.config/Code/User/mcp.claude.json"
 ln -sf ~/.mcp/generated/kiro.json "$HOME/.config/Code/User/mcp.kiro.json"
-ln -sf ~/.mcp/generated/opencode.json "$HOME/.config/Code/User/mcp.opencode.json"
+ln -sf ~/.mcp/generated/opencode.json "$HOME/.config/opencode/opencode.json"
 ```
+
+For OpenCode, the generated config uses the `mcp` root key and local `docker exec` commands to run the MCP containerized servers.
 
 For Windows PowerShell, use `New-Item -ItemType SymbolicLink` and adjust the source path if necessary:
 
