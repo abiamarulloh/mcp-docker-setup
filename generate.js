@@ -133,6 +133,7 @@ for (const [name, server] of Object.entries(source.mcpServers || {})) {
   dockerServers[name] = {
     command: cmd[0],
     args: cmd.slice(1),
+    env: server.env || undefined,
   };
 }
 
@@ -143,6 +144,7 @@ for (const [name, server] of Object.entries(source.mcpServers || {})) {
     command: cmd[0],
     args: cmd.slice(1),
     type: "stdio",
+    env: server.env || undefined,
   };
 }
 
@@ -177,6 +179,7 @@ for (const [name, server] of Object.entries(source.mcpServers || {})) {
     type: "local",
     enabled: true,
     command: cmd,
+    env: server.env || undefined,
   };
 }
 
