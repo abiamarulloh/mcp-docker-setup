@@ -8,8 +8,14 @@ services:
       - /tmp:/tmp:delegated
     env_file:
       - .env
-    command: sh -lc "npx -y @upstash/context7-mcp"
+    command: sleep infinity
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "test -n \"$CONTEXT7_API_KEY\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   filesystem-personal:
     image: node:20-alpine
@@ -17,12 +23,18 @@ services:
     working_dir: /workspace
     volumes:
       - ./:/workspace:delegated
-      - /Volumes/Data/my-labs:/data:delegated
+      - ${FILESYSTEM_PATH:-/Volumes/Data/my-labs}:/data:delegated
       - /tmp:/tmp:delegated
     env_file:
       - .env
-    command: sh -lc "npx -y @modelcontextprotocol/server-filesystem /data"
+    command: sleep infinity
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "test -d /data"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   github-personal:
     image: node:20-alpine
@@ -33,8 +45,47 @@ services:
       - /tmp:/tmp:delegated
     env_file:
       - .env
-    command: sh -lc "npx -y @modelcontextprotocol/server-github"
+    command: sleep infinity
     restart: unless-stopped
-    depends_on:
-      - context7
-      - filesystem-personal
+    healthcheck:
+      test: ["CMD-SHELL", "test -n \"$GITHUB_PERSONAL_ACCESS_TOKEN\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  jira:
+    image: node:20-alpine
+    container_name: mcp_jira
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace:delegated
+      - /tmp:/tmp:delegated
+    env_file:
+      - .env
+    command: sleep infinity
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "test -n \"$JIRA_HOST\" && test -n \"$JIRA_EMAIL\" && test -n \"$JIRA_API_TOKEN\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  slack:
+    image: node:20-alpine
+    container_name: mcp_slack
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace:delegated
+      - /tmp:/tmp:delegated
+    env_file:
+      - .env
+    command: sleep infinity
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "test -n \"$SLACK_BOT_TOKEN\" && test -n \"$SLACK_TEAM_ID\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

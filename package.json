@@ -8,7 +8,8 @@
     "stop:mcp": "./mcp-stop.sh",
     "status:mcp": "./mcp-status.sh",
     "logs:mcp": "docker compose logs -f",
-    "generate": "node ./generate.js"
+    "generate": "node ./generate.js",
+    "ui": "node ./ui/server.js"
   },
   "engines": {
     "node": ">=18"
