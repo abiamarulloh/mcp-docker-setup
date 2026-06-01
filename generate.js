@@ -36,51 +36,6 @@ function resolveArgs(args) {
   return (args || []).map(a => resolveVar(a)).filter(a => a !== "");
 }
 
-const resolvedSource = { mcpServers: {} };
-for (const [name, server] of Object.entries(source.mcpServers || {})) {
-  resolvedSource.mcpServers[name] = {
-    ...server,
-    args: resolveArgs(server.args)
-  };
-}
-
-fs.mkdirSync("./generated", {
-  recursive: true
-});
-
-const vscodeServers = Object.fromEntries(
-  Object.entries(resolvedSource.mcpServers || {}).map(([name, server]) => [
-    name,
-    { ...server, type: "stdio" }
-  ])
-);
-fs.writeFileSync(
-  "./generated/vscode.json",
-  JSON.stringify(
-    {
-      servers: vscodeServers
-    },
-    null,
-    2
-  )
-);
-
-fs.writeFileSync(
-  "./generated/claude.json",
-  JSON.stringify(
-    {
-      mcpServers: resolvedSource.mcpServers
-    },
-    null,
-    2
-  )
-);
-
-const opencode = {
-  $schema: "https://opencode.ai/config.json",
-  mcp: {}
-};
-
 function buildContainerPathMap() {
   const compose = fs.readFileSync("./docker-compose.yml", "utf8");
   const map = {};
@@ -104,7 +59,6 @@ function buildContainerPathMap() {
     }
 
     if (inVolumes && currentService && trimmed.startsWith("- ")) {
-      // Split colon-delimited volume but handle colons inside ${VAR:-default}
       const vol = trimmed.slice(2);
       const parts = vol.split(":");
       let hostParts = [];
@@ -141,13 +95,12 @@ function buildContainerPathMap() {
 
 const containerPathMap = buildContainerPathMap();
 
-// Map the host project root to /workspace inside containers for all servers
 for (const name of Object.keys(source.mcpServers || {})) {
   if (!containerPathMap[name]) containerPathMap[name] = {};
   containerPathMap[name][PROJECT_ROOT] = "/workspace";
 }
 
-for (const [name, server] of Object.entries(source.mcpServers || {})) {
+function buildDockerCommand(name, server) {
   const containerName = `mcp_${name.replace(/-/g, "_")}`;
   const resolved = resolveArgs(server.args);
   const args = resolved.map((arg) => {
@@ -169,40 +122,67 @@ for (const [name, server] of Object.entries(source.mcpServers || {})) {
   }
 
   command.push(containerName, server.command, ...args);
+  return command;
+}
 
+fs.mkdirSync("./generated", { recursive: true });
+
+const dockerServers = {};
+for (const [name, server] of Object.entries(source.mcpServers || {})) {
+  const cmd = buildDockerCommand(name, server);
+  dockerServers[name] = {
+    command: cmd[0],
+    args: cmd.slice(1),
+  };
+}
+
+const vscodeServers = {};
+for (const [name, server] of Object.entries(source.mcpServers || {})) {
+  const cmd = buildDockerCommand(name, server);
+  vscodeServers[name] = {
+    command: cmd[0],
+    args: cmd.slice(1),
+    type: "stdio",
+  };
+}
+
+fs.writeFileSync(
+  "./generated/vscode.json",
+  JSON.stringify({ servers: vscodeServers }, null, 2)
+);
+
+fs.writeFileSync(
+  "./generated/claude.json",
+  JSON.stringify({ mcpServers: dockerServers }, null, 2)
+);
+
+fs.writeFileSync(
+  "./generated/kiro.json",
+  JSON.stringify({ mcpServers: dockerServers }, null, 2)
+);
+
+fs.writeFileSync(
+  "./generated/trae.json",
+  JSON.stringify({ mcpServers: dockerServers }, null, 2)
+);
+
+const opencode = {
+  $schema: "https://opencode.ai/config.json",
+  mcp: {},
+};
+
+for (const [name, server] of Object.entries(source.mcpServers || {})) {
+  const cmd = buildDockerCommand(name, server);
   opencode.mcp[name] = {
     type: "local",
     enabled: true,
-    command: command,
-    env: server.env || undefined
+    command: cmd,
   };
 }
 
 fs.writeFileSync(
   "./generated/opencode.json",
   JSON.stringify(opencode, null, 2)
-);
-
-fs.writeFileSync(
-  "./generated/kiro.json",
-  JSON.stringify(
-    {
-      mcpServers: resolvedSource.mcpServers
-    },
-    null,
-    2
-  )
-);
-
-fs.writeFileSync(
-  "./generated/trae.json",
-  JSON.stringify(
-    {
-      mcpServers: resolvedSource.mcpServers || {}
-    },
-    null,
-    2
-  )
 );
 
 console.log("generated");
