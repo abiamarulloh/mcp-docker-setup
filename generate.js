@@ -13,7 +13,7 @@ fs.writeFileSync(
   "./generated/vscode.json",
   JSON.stringify(
     {
-      servers: source
+      servers: source.mcpServers || {}
     },
     null,
     2
