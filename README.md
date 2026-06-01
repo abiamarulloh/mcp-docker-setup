@@ -102,3 +102,5 @@ docker compose down
 - If `docker compose` warns about obsolete `version`, the Compose files are already updated and the warning should no longer appear.
 - If `github-personal` does not start, check that `GITHUB_PERSONAL_TOKEN` is set in `.env`.
 - Use `docker compose ps` to verify which services are running.
+
+<!-- PR note: initial implementation for issue #1 -->
