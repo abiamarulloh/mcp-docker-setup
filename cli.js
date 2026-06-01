@@ -67,8 +67,10 @@ async function cmdInit() {
 
   const edit = await ask("  Open .env now? (Y/n) ");
   if (edit.toLowerCase() !== "n") {
-    const editor = process.env.EDITOR || "vi";
-    spawn(editor, [envPath], { stdio: "inherit", cwd: ROOT });
+    const editor = (process.env.EDITOR || "vi").split(/\s+/);
+    const cmd = editor[0];
+    const args = editor.slice(1).concat([envPath]);
+    spawn(cmd, args, { stdio: "inherit", cwd: ROOT });
   }
 
   println("");
