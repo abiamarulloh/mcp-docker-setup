@@ -1,4 +1,7 @@
- # MCP Setup
+# MCP Docker Setup
+
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/abiamarulloh/mcp-docker-setup/actions/workflows/ci.yml/badge.svg)](https://github.com/abiamarulloh/mcp-docker-setup/actions/workflows/ci.yml)
 
 This repository contains MCP configuration for local development using Docker Compose.
 
@@ -152,4 +155,3 @@ docker compose down
 - If `github-personal` does not start, check that `GITHUB_PERSONAL_TOKEN` is set in `.env`.
 - Use `docker compose ps` to verify which services are running.
 
-<!-- PR note: initial implementation for issue #1 -->
