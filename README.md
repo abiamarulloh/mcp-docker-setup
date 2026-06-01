@@ -3,155 +3,177 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/abiamarulloh/mcp-docker-setup/actions/workflows/ci.yml/badge.svg)](https://github.com/abiamarulloh/mcp-docker-setup/actions/workflows/ci.yml)
 
-This repository contains MCP configuration for local development using Docker Compose.
-
-## What is included
-
-- `docker-compose.yml` – defines MCP services:
-  - `context7`
-  - `filesystem-personal`
-  - `github-personal`
-- `docker-compose.override.yml` – development override with `tty` and `stdin_open`
-- `package.json` – convenient npm wrappers for Docker Compose commands
-- `.env` – environment variables used by the containers
-- `generate.js` and `source.json` – source configuration used to generate MCP config files
-- `generated/` – generated client config files such as `claude.json`, `kiro.json`, `opencode.json`, `trae.json`, and `vscode.json`
-
-## Prerequisites
-
-- Docker Desktop / Docker Engine installed
-- `docker compose` available in your shell
-- A valid `GITHUB_PERSONAL_TOKEN` in `.env` if you want the GitHub MCP server to run
-- Copy `.env.example` to `.env` and fill in your values before starting
-
-## Usage
-
-Before starting MCP, generate the client configuration files once:
+One-command Docker-based [MCP](https://modelcontextprotocol.io) server setup with auto-generated configs for all major AI coding clients.
 
 ```bash
+npx mcp-docker-setup init
+```
+
+## Quick Start
+
+```bash
+# Run the interactive setup wizard
+npx mcp-docker-setup init
+```
+
+This will:
+1. Check prerequisites (Docker, Node.js)
+2. Create `.env` from `.env.example`
+3. Prompt to edit `.env` with your API keys
+4. Generate client configuration files
+5. Offer to symlink configs into client app directories
+6. Start Docker containers
+
+## Architecture
+
+```
+Clients (VS Code, Claude, OpenCode, Trae, Kiro)
+  │  docker exec -i <container> <command>
+  ▼
+Docker Containers (node:20-alpine)
+  │  npx -y <mcp-server-package>
+  ▼
+MCP Servers (Context7, GitHub, Jira, Slack, Filesystem)
+```
+
+All communication uses `docker exec -i` — no ports are exposed. Each server runs in an isolated container with `sleep infinity` and is only activated when a client sends a command.
+
+## CLI Reference
+
+```
+Usage: npx mcp-docker-setup <command>
+
+Commands:
+  init       Interactive setup wizard (first-time setup)
+  start      Start Docker Compose services
+  stop       Stop Docker Compose services
+  status     Show container status
+  generate   Generate client configuration files
+  ui         Launch web UI at http://localhost:3456
+  logs       Tail Docker Compose logs
+  help       Show this help message
+```
+
+## Available Servers
+
+| Server | Package | Required Env Vars |
+|---|---|---|
+| Context7 | `@upstash/context7-mcp` | `CONTEXT7_API_KEY` |
+| GitHub | `@modelcontextprotocol/server-github` | `GITHUB_PERSONAL_ACCESS_TOKEN` |
+| Filesystem | `@modelcontextprotocol/server-filesystem` | `FILESYSTEM_PATH` |
+| Jira | `@tarasrushchak/jira-mcp-server` | `JIRA_HOST`, `JIRA_EMAIL`, `JIRA_API_TOKEN` |
+| Slack | `@modelcontextprotocol/server-slack` | `SLACK_BOT_TOKEN`, `SLACK_TEAM_ID` |
+
+## Manual Setup
+
+If you prefer not to use the CLI wizard:
+
+```bash
+git clone https://github.com/abiamarulloh/mcp-docker-setup.git
+cd mcp-docker-setup
+cp .env.example .env
+# Edit .env with your API keys
 npm run generate
-```
-
-That command creates the generated config files used by clients such as `claude.json`, `kiro.json`, `opencode.json`, `trae.json`, and `vscode.json`.
-
-Then run MCP from the project root (`~/.mcp`):
-
-```bash
 npm run start:mcp
-npm run status:mcp
-npm run logs:mcp
-npm run stop:mcp
 ```
 
-## Client config symlink tutorial
+## Web UI
 
-This repository supports two approaches for VS Code MCP configuration:
-
-### Option 1: Workspace-level config (shared with team)
-The generated `.vscode/mcp.json` is committed to the repository and applies to all team members who open this workspace in VS Code. Use this for consistent, shared MCP server configuration.
-
-After running `npm run generate`, the workspace config is automatically created in `.vscode/mcp.json`. No additional setup needed.
-
-### Option 2: User profile config (personal setup)
-If you prefer personal MCP configuration across all workspaces, you can create symlinks to the generated configs in your VS Code user profile.
-
-After running `npm run generate`, you can symlink the generated client config into your VS Code user profile locations.
-
-Common symlink commands on macOS and Linux:
+Launch a browser-based env var manager and connection tester:
 
 ```bash
-ln -sf ~/.mcp/generated/vscode.json "$HOME/Library/Application Support/Code/User/mcp.json"
-ln -sf ~/.mcp/generated/claude.json "$HOME/Library/Application Support/Code/User/mcp.claude.json"
-ln -sf ~/.mcp/generated/kiro.json "$HOME/Library/Application Support/Code/User/mcp.kiro.json"
-ln -sf ~/.mcp/generated/opencode.json "$HOME/Library/Application Support/Code/User/mcp.opencode.json"
+npx mcp-docker-setup ui
+# or
+npm run ui
 ```
 
-For Linux, the target path may differ depending on your VS Code install. Common paths include:
+Opens at `http://localhost:3456`. Features:
+- Edit environment variables per server
+- Test connections (GitHub, Jira, Slack, Context7, Filesystem)
+- Toggle servers on/off
+- Auto-generates configs on save
+
+## Client Configuration
+
+After running `npm run generate`, config files are created in `generated/`. Link them to your clients:
+
+### VS Code (macOS)
+```bash
+ln -sf "$PWD/generated/vscode.json" "$HOME/Library/Application Support/Code/User/mcp.json"
+```
+
+### Claude Desktop (macOS)
+```bash
+ln -sf "$PWD/generated/claude.json" "$HOME/Library/Application Support/Claude/claude_desktop_config.json"
+```
+
+### OpenCode
+```bash
+ln -sf "$PWD/generated/opencode.json" "$HOME/.config/opencode/opencode.json"
+```
+
+### Trae (macOS)
+```bash
+ln -sf "$PWD/generated/trae.json" "$HOME/Library/Application Support/Trae/User/mcp.json"
+```
+
+### Kiro
+```bash
+ln -sf "$PWD/generated/kiro.json" "$HOME/.kiro/settings/mcp.json"
+```
+
+Restart the client after creating the symlink.
+
+## How It Works
+
+1. **`docker-compose.yml`** — Defines `node:20-alpine` containers for each server, all running `sleep infinity` and reading env vars from `.env`
+2. **`source.json`** — Source of truth mapping server names to commands, args, and env var references (`${VAR_NAME}`)
+3. **`generate.js`** — Reads `source.json`, resolves env vars, applies format transformations for each client, produces files in `generated/`
+4. **Container path mapping** — Generates `docker exec` commands for OpenCode and Trae that translate host paths to container paths using volume mappings from `docker-compose.yml`
+
+### Adding a New Server
+
+1. Add a service to `docker-compose.yml`
+2. Add an entry to `source.json`:
+```json
+{
+  "mcpServers": {
+    "my-server": {
+      "command": "npx",
+      "args": ["-y", "@org/my-mcp-server"],
+      "env": {
+        "MY_API_KEY": "${MY_API_KEY}"
+      }
+    }
+  }
+}
+```
+3. Add defaults to `.env.example`
+4. Run `npm run generate`
+
+## Docker Management
 
 ```bash
-ln -sf ~/.mcp/generated/vscode.json "$HOME/.config/Code/User/mcp.json"
-ln -sf ~/.mcp/generated/claude.json "$HOME/.config/Code/User/mcp.claude.json"
-ln -sf ~/.mcp/generated/kiro.json "$HOME/.config/Code/User/mcp.kiro.json"
-ln -sf ~/.mcp/generated/opencode.json "$HOME/.config/opencode/opencode.json"
+npm run start:mcp    # Start all containers
+npm run stop:mcp     # Stop all containers
+npm run status:mcp   # Check container health
+npm run logs:mcp     # Follow logs
 ```
 
-For OpenCode, the generated config uses the `mcp` root key and local `docker exec` commands to run the MCP containerized servers.
+## Environment Variables
 
-#### Trae
-
-Trae configuration uses the standard `mcpServers` root key.
-
-**Global config** (recommended — applies to all projects):
-
-| Platform | Path |
-|---|---|
-| macOS | `~/Library/Application Support/Trae/User/mcp.json` |
-| Linux | `~/.config/Trae/User/mcp.json` |
-| Windows | `%APPDATA%\Trae\User\mcp.json` |
-
-```bash
-# macOS
-mkdir -p "$HOME/Library/Application Support/Trae/User"
-ln -sf ~/.mcp/generated/trae.json "$HOME/Library/Application Support/Trae/User/mcp.json"
-
-# Linux
-mkdir -p ~/.config/Trae/User
-ln -sf ~/.mcp/generated/trae.json ~/.config/Trae/User/mcp.json
-```
-
-**Project-level config** (experimental — agent may not have access):
-
-```bash
-mkdir -p /path/to/your-project/.trae
-ln -sf ~/.mcp/generated/trae.json /path/to/your-project/.trae/mcp.json
-```
-
-Restart Trae after setting up the symlink.
-
-For Windows PowerShell, use `New-Item -ItemType SymbolicLink` and adjust the source path if necessary:
-
-```powershell
-New-Item -ItemType SymbolicLink -Path "$HOME\AppData\Roaming\Code\User\mcp.json" -Target "C:\Users\<user>\.mcp\generated\vscode.json"
-New-Item -ItemType SymbolicLink -Path "$HOME\AppData\Roaming\Code\User\mcp.claude.json" -Target "C:\Users\<user>\.mcp\generated\claude.json"
-New-Item -ItemType SymbolicLink -Path "$HOME\AppData\Roaming\Code\User\mcp.kiro.json" -Target "C:\Users\<user>\.mcp\generated\kiro.json"
-New-Item -ItemType SymbolicLink -Path "$HOME\AppData\Roaming\Code\User\mcp.opencode.json" -Target "C:\Users\<user>\.mcp\generated\opencode.json"
-
-# Trae (global)
-New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.trae\mcp.json" -Target "$env:USERPROFILE\.mcp\generated\trae.json"
-
-# Trae (per-project, run inside each project directory)
-New-Item -ItemType SymbolicLink -Path ".trae\mcp.json" -Target "$env:USERPROFILE\.mcp\generated\trae.json"
-```
-
-If symlinks are not available on Windows, you can copy the files instead:
-
-```powershell
-Copy-Item "$HOME\.mcp\generated\vscode.json" "$HOME\AppData\Roaming\Code\User\mcp.json"
-```
-
-If your client expects a different path, replace the destination path accordingly.
-
-Once the symlinks are created, restart VS Code or the client so it re-reads the MCP configuration.
-
-Or directly with Docker Compose:
-
-```bash
-docker compose up -d
-docker compose ps
-docker compose logs -f
-docker compose down
-```
-
-## Notes
-
-- The `start:mcp`, `stop:mcp`, and `status:mcp` scripts are wrappers around Docker Compose and provide a more intuitive experience.
-- `docker-compose.override.yml` is automatically applied by Docker Compose.
-- Keep `.env` private and do not commit secrets like `GITHUB_PERSONAL_TOKEN` to version control.
-- A `.gitignore` file is included to ignore local secrets and editor artifacts.
+See `.env.example` for all available variables and their descriptions.
 
 ## Troubleshooting
 
-- If `docker compose` warns about obsolete `version`, the Compose files are already updated and the warning should no longer appear.
-- If `github-personal` does not start, check that `GITHUB_PERSONAL_TOKEN` is set in `.env`.
-- Use `docker compose ps` to verify which services are running.
+| Issue | Solution |
+|---|---|
+| "Not connected" in client | Run `npm run status:mcp` — check all containers are healthy |
+| FILESYSTEM_PATH not found | Set the path in `.env` — the server needs it as a CLI argument |
+| Container won't start | `npm run logs:mcp` to see errors; check env vars are set |
+| Port conflicts | No ports are exposed — all communication uses `docker exec -i` |
+| Generated configs outdated | Run `npm run generate` after changing `source.json` |
 
+## License
+
+MIT

@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
+const PROJECT_ROOT = path.resolve(".");
+
 const source = JSON.parse(
   fs.readFileSync("./source.json", "utf8")
 );
@@ -24,7 +26,10 @@ function readEnv(filePath) {
 const env = readEnv("./.env");
 
 function resolveVar(str) {
-  return str.replace(/\$\{([^}]+)\}/g, (_, name) => env[name] || "");
+  return str.replace(/\$\{([^}]+)\}/g, (_, name) => {
+    if (name === "PROJECT_ROOT") return PROJECT_ROOT;
+    return env[name] || "";
+  });
 }
 
 function resolveArgs(args) {
@@ -99,17 +104,29 @@ function buildContainerPathMap() {
     }
 
     if (inVolumes && currentService && trimmed.startsWith("- ")) {
-      const parts = trimmed.slice(2).split(":");
-      if (parts.length >= 2) {
-        let host = parts[0];
-        const container = parts[1];
+      // Split colon-delimited volume but handle colons inside ${VAR:-default}
+      const vol = trimmed.slice(2);
+      const parts = vol.split(":");
+      let hostParts = [];
+      let containerPath = null;
+      let foundContainer = false;
+      for (const part of parts) {
+        if (!foundContainer && part.startsWith("/")) {
+          containerPath = part;
+          foundContainer = true;
+        } else if (!foundContainer) {
+          hostParts.push(part);
+        }
+      }
+      if (containerPath) {
+        let host = hostParts.join(":");
         const envRef = host.match(/^\$\{(\w+)(?::-([^}]*))?\}$/);
         if (envRef) {
           host = env[envRef[1]] || envRef[2] || "";
         }
         if (!host.startsWith("/") || host === "/tmp") continue;
         if (!map[currentService]) map[currentService] = {};
-        map[currentService][host] = container;
+        map[currentService][host] = containerPath;
       }
       continue;
     }
@@ -124,12 +141,23 @@ function buildContainerPathMap() {
 
 const containerPathMap = buildContainerPathMap();
 
+// Map the host project root to /workspace inside containers for all servers
+for (const name of Object.keys(source.mcpServers || {})) {
+  if (!containerPathMap[name]) containerPathMap[name] = {};
+  containerPathMap[name][PROJECT_ROOT] = "/workspace";
+}
+
 for (const [name, server] of Object.entries(source.mcpServers || {})) {
   const containerName = `mcp_${name.replace(/-/g, "_")}`;
   const resolved = resolveArgs(server.args);
   const args = resolved.map((arg) => {
     const replacements = containerPathMap[name] || {};
-    return replacements[arg] || arg;
+    for (const [hostPath, containerPath] of Object.entries(replacements)) {
+      if (arg.startsWith(hostPath)) {
+        return arg.replace(hostPath, containerPath);
+      }
+    }
+    return arg;
   });
 
   const command = ["docker", "exec", "-i"];

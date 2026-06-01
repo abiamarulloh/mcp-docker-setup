@@ -1,0 +1,7 @@
+.env
+.github
+generated
+node_modules
+package-lock.json
+.DS_Store
+.vscode

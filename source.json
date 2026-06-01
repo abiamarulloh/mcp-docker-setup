@@ -46,7 +46,7 @@
     "slack": {
       "command": "sh",
       "args": [
-        "/Users/abi/.mcp/servers/run-slack.sh"
+        "${PROJECT_ROOT}/servers/run-slack.sh"
       ],
       "env": {
         "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}",

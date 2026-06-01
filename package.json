@@ -1,9 +1,12 @@
 {
-  "name": "mcp-setup",
+  "name": "mcp-docker-setup",
   "version": "1.0.0",
-  "description": "Local MCP Docker Compose setup with generated server configs for VS Code and other clients.",
-  "private": true,
+  "description": "One-command Docker-based MCP server setup for AI coding clients (VS Code, Claude, Kiro, Trae, OpenCode)",
+  "bin": {
+    "mcp-docker-setup": "./cli.js"
+  },
   "scripts": {
+    "init": "node ./cli.js init",
     "start:mcp": "./mcp-start.sh",
     "stop:mcp": "./mcp-stop.sh",
     "status:mcp": "./mcp-status.sh",
@@ -13,5 +16,23 @@
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abiamarulloh/mcp-docker-setup.git"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "docker",
+    "claude",
+    "vscode",
+    "kiro",
+    "trae",
+    "opencode",
+    "ai",
+    "llm",
+    "tool-server"
+  ],
+  "license": "MIT"
 }
