@@ -1,6 +1,6 @@
 {
   "name": "mcp-docker-setup",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "One-command Docker-based MCP server setup for AI coding clients (VS Code, Claude, Kiro, Trae, OpenCode)",
   "bin": {
     "mcp-docker-setup": "./cli.js"
