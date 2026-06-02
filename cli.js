@@ -60,18 +60,9 @@ async function cmdInit() {
   }
 
   println("");
-  println("  ─── Open .env in your editor and fill in your API keys ───");
-  println("  Required: GITHUB_PERSONAL_ACCESS_TOKEN, CONTEXT7_API_KEY");
-  println("  Optional: JIRA_HOST, JIRA_EMAIL, JIRA_API_TOKEN, SLACK_*");
+  println("  ─── Configure your API keys via the web UI ───");
+  println("  Run: npm run ui  or  npx mcp-docker-setup ui");
   println("");
-
-  const edit = await ask("  Open .env now? (Y/n) ");
-  if (edit.toLowerCase() !== "n") {
-    const editor = (process.env.EDITOR || "vi").split(/\s+/);
-    const cmd = editor[0];
-    const args = editor.slice(1).concat([envPath]);
-    spawn(cmd, args, { stdio: "inherit", cwd: ROOT });
-  }
 
   println("");
   print("  Generating client configs... ");
